@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Color Shift Memory Game</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
+
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Poppins', sans-serif;
+    overflow: hidden;
+    background: linear-gradient(270deg, #ff4e50, #f9d423, #36d1dc, #5b86e5);
+    background-size: 800% 800%;
+    animation: gradientShift 15s ease infinite;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  @keyframes gradientShift {
+    0% {background-position:0% 50%;}
+    50% {background-position:100% 50%;}
+    100% {background-position:0% 50%;}
+  }
+
+  #game-container {
+    background: rgba(0,0,0,0.75);
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(255,255,255,0.2);
+    width: 350px;
+    padding: 25px 30px 40px 30px;
+    text-align: center;
+    color: #fff;
+    user-select: none;
+  }
+
+  h1 {
+    margin: 0 0 20px;
+    font-size: 2.25rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 0 8px #fff;
+  }
+
+  #score {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+  }
+
+  #message {
+    font-size: 1.1rem;
+    margin: 15px 0 25px;
+    min-height: 30px;
+  }
+
+  #color-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 140px);
+    grid-template-rows: repeat(2, 140px);
+    gap: 20px;
+    justify-content: center;
+  }
+
+  .color-button {
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(255,255,255,0.15);
+    transition: box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    filter: drop-shadow(0 0 10px rgb(0 0 0 / 0.2));
+  }
+
+  .color-button:active {
+    filter: drop-shadow(0 0 20px #fff);
+    transform: scale(0.95);
+    transition: transform 0.1s ease, filter 0.1s ease;
+  }
+
+  .color-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    opacity: 0.6;
+    filter: blur(15px);
+    transition: opacity 0.3s ease;
+    z-index: 0;
+  }
+
+  .color-red {
+    background: #ff4e50;
+  }
+
+  .color-red::before {
+    background: #ff4e50;
+  }
+
+  .color-yellow {
+    background: #f9d423;
+  }
+
+  .color-yellow::before {
+    background: #f9d423;
+  }
+
+  .color-blue {
+    background: #36d1dc;
+  }
+
+  .color-blue::before {
+    background: #36d1dc;
+  }
+
+  .color-purple {
+    background: #5b86e5;
+  }
+
+  .color-purple::before {
+    background: #5b86e5;
+  }
+
+  .active-glow {
+    animation: pulseGlow 0.5s ease forwards;
+  }
+
+  @keyframes pulseGlow {
+    0% {
+      box-shadow: 0 0 20px 10px rgba(255,255,255,0.2);
+    }
+    100% {
+      box-shadow: 0 0 40px 20px rgba(255,255,255,0);
+    }
+  }
+
+  button#start-btn {
+    background: transparent;
+    border: 2px solid #fff;
+    padding: 10px 26px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 25px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  button#start-btn:hover {
+    background-color: #fff;
+    color: #222;
+  }
+
+  /* Sound enabled icon */
+  #sound-control {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+  }
+  #sound-control:hover {
+    opacity: 1;
+  }
+  svg {
+    fill: #fff;
+  }
+</style>
+</head>
+<body>
+  <div id="game-container" role="main" aria-label="Color Shift Memory Game">
+    <h1>Color Shift Memory</h1>
+    <div id="score" aria-live="polite">Score: 0</div>
+    <div id="message" aria-live="polite" aria-atomic="true">Press START to play!</div>
+    <div id="color-buttons" aria-label="Color buttons for game input">
+      <div class="color-button color-red" data-color="red" tabindex="0" role="button" aria-pressed="false" aria-label="Red button"></div>
+      <div class="color-button color-yellow" data-color="yellow" tabindex="0" role="button" aria-pressed="false" aria-label="Yellow button"></div>
+      <div class="color-button color-blue" data-color="blue" tabindex="0" role="button" aria-pressed="false" aria-label="Blue button"></div>
+      <div class="color-button color-purple" data-color="purple" tabindex="0" role="button" aria-pressed="false" aria-label="Purple button"></div>
+    </div>
+    <button id="start-btn" aria-label="Start the game">START</button>
+  </div>
+
+  <svg id="sound-control" role="button" tabindex="0" aria-label="Toggle sound" viewBox="0 0 24 24">
+    <path d="M3 10v4h4l5 5V5l-5 5H3z"></path>
+    <path id="mute-icon" d="M16.5 12a4.5 4.5 0 0 1-4.5 4.5v-9A4.5 4.5 0 0 1 16.5 12z"></path>
+  </svg>
+
+<script>
+(() => {
+  const colorButtons = document.querySelectorAll('.color-button');
+  const scoreDisplay = document.getElementById('score');
+  const messageDisplay = document.getElementById('message');
+  const startBtn = document.getElementById('start-btn');
+  const soundControl = document.getElementById('sound-control');
+
+  let sequence = [];
+  let playerSequence = [];
+  let score = 0;
+  let acceptingInput = false;
+  let soundEnabled = true;
+
+  // Audio context for sounds
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioContext();
+
+  // Frequencies for each color (pleasant tones)
+  const frequencies = {
+    'red': 261.6,    // C4
+    'yellow': 329.6, // E4
+    'blue': 392.0,   // G4
+    'purple': 523.3  // C5
+  };
+
+  // Play tone for a color
+  function playTone(color, duration=400){
+    if(!soundEnabled) return;
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.type = 'triangle';
+    oscillator.frequency.value = frequencies[color];
+
+    gainNode.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.start();
+
+    setTimeout(() => {
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+      oscillator.stop(audioCtx.currentTime + 0.15);
+    }, duration - 100);
+  }
+
+  // Animate button flash
+  function flashButton(color) {
+    const btn = Array.from(colorButtons).find(b => b.dataset.color === color);
+    if(!btn) return;
+    btn.classList.add('active-glow');
+    playTone(color);
+    setTimeout(() => {
+      btn.classList.remove('active-glow');
+    }, 500);
+  }
+
+  // Generate next step in sequence
+  function addStep() {
+    const colors = ['red','yellow','blue','purple'];
+    const next = colors[Math.floor(Math.random() * colors.length)];
+    sequence.push(next);
+  }
+
+  // Play sequence animation
+  async function playSequence() {
+    acceptingInput = false;
+    messageDisplay.textContent = 'Watch carefully...';
+    for (let color of sequence) {
+      flashButton(color);
+      await new Promise(r => setTimeout(r, 800));
+    }
+    messageDisplay.textContent = 'Your turn!';
+    acceptingInput = true;
+    playerSequence = [];
+  }
+
+  // Check player's input
+  function checkInput(color) {
+    if(!acceptingInput) return;
+    playerSequence.push(color);
+    flashButton(color);
+    const idx = playerSequence.length -1;
+    if(playerSequence[idx] !== sequence[idx]) {
+      // Game Over
+      acceptingInput = false;
+      playErrorSound();
+      messageDisplay.textContent = 'Game Over! Press START to try again.';
+      sequence = [];
+      playerSequence = [];
+      score = 0;
+      updateScore();
+      return;
+    }
+    if(playerSequence.length === sequence.length) {
+      // Round complete
+      score++;
+      updateScore();
+      acceptingInput = false;
+      messageDisplay.textContent = 'Good job! Next round...';
+      setTimeout(() => {
+        addStep();
+        playSequence();
+      }, 1000);
+    }
+  }
+
+  // Update score display
+  function updateScore() {
+    scoreDisplay.textContent = `Score: ${score}`;
+  }
+
+  // Play error buzzer sound
+  function playErrorSound() {
+    if(!soundEnabled) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(110, audioCtx.currentTime); // low beep
+
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.4, audioCtx.currentTime + 0.02);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+
+    setTimeout(() => {
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2);
+      osc.stop(audioCtx.currentTime + 0.3);
+    }, 500);
+  }
+
+  // Start game
+  function startGame() {
+    if(audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    sequence = [];
+    playerSequence = [];
+    score = 0;
+    updateScore();
+    messageDisplay.textContent = 'Get ready...';
+    addStep();
+    setTimeout(playSequence, 1000);
+  }
+
+  // Event listeners for color buttons
+  colorButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      checkInput(btn.dataset.color);
+    });
+
+    btn.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        checkInput(btn.dataset.color);
+      }
+    });
+  });
+
+  // Start button
+  startBtn.addEventListener('click', startGame);
+
+  // Sound control toggle
+  soundControl.addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    updateSoundIcon();
+  });
+
+  soundControl.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      soundEnabled = !soundEnabled;
+      updateSoundIcon();
+    }
+  });
+
+  function updateSoundIcon(){
+    if(soundEnabled){
+      soundControl.innerHTML = '<path d="M3 10v4h4l5 5V5l-5 5H3z"></path><path d="M16.5 12a4.5 4.5 0 0 1-4.5 4.5v-9A4.5 4.5 0 0 1 16.5 12z"></path>';
+      soundControl.setAttribute('aria-label', 'Toggle sound on');
+    } else {
+      soundControl.innerHTML = '<path d="M3 10v4h4l5 5V5l-5 5H3z" opacity="0.3"></path><path d="M16.5 12a4.5 4.5 0 0 1-4.5 4.5v-9A4.5 4.5 0 0 1 16.5 12z" opacity="0.3"></path><line x1="19" y1="5" x2="23" y2="19" stroke="white" stroke-width="2"></line>';
+      soundControl.setAttribute('aria-label', 'Toggle sound off');
+    }
+  }
+
+  // Initialize sound icon
+  updateSoundIcon();
+
+})();
+</script>
+</body>
+</html>
+
